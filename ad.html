@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carrom Lover | Shopping App</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+/* --- General & Typography --- */
+body{
+  font-family:'Poppins', sans-serif;
+  background:#f0f2f5; /* Light, modern background */
+  margin:0;
+  padding:0;
+  color: #333;
+}
+.container{
+  background:#fff;
+  padding:20px;
+  border-radius:15px; /* Softer edges */
+  max-width:480px;
+  margin:25px auto; /* Reduced top margin for better mobile view */
+  box-shadow:0 6px 15px rgba(0,0,0,0.1); /* Deeper, softer shadow */
+}
+h2{
+    text-align:center;
+    color:#1a73e8; /* Google Blue for heading */
+    font-weight:700;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+h2 i { color: #ff9800; }
+
+/* --- Forms, Inputs, and Selects --- */
+input, select{
+  width:100%;
+  padding:12px;
+  margin-top:15px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  box-sizing:border-box;
+  font-size:15px;
+  transition:border-color 0.3s;
+}
+input:focus, select:focus {
+    border-color: #1a73e8;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+/* --- Buttons --- */
+button{
+  width:100%;
+  padding:14px; /* Slightly larger padding */
+  margin-top:15px;
+  border-radius:8px;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+  font-size:16px;
+  transition:all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+/* Primary Button (Login/Submit) */
+button.primary-btn {
+  background:linear-gradient(90deg, #1a73e8, #4285f4); /* Blue gradient */
+  color:#fff;
+}
+button.primary-btn:hover {
+    box-shadow: 0 6px 12px rgba(26, 115, 232, 0.4);
+    transform: translateY(-2px);
+}
+/* Buy Now Button */
+.product-card button {
+    background: #ff9800; /* Orange */
+    color: #fff;
+    padding: 10px;
+    margin-top: 8px;
+    box-shadow: none;
+    font-size: 14px;
+}
+.product-card button:hover {
+    background: #e68900;
+}
+/* Cancel/Back Button */
+button.secondary-btn {
+    background: #777; /* Grey */
+    color: #fff;
+}
+button.secondary-btn:hover {
+    background: #555;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
+}
+/* FIX 5: Smaller Back Button in QR page */
+.qr-page .action-buttons-bottom button.secondary-btn {
+    width: auto; /* Allow button to size to content */
+    padding: 12px 25px; /* Adjust padding */
+    margin-left: auto; /* Center or align right */
+    margin-right: auto; 
+    display: block; /* To apply margin auto */
+}
+
+/* --- Sections Display --- */
+.shop,.qr-page,.orders{display:none;}
+
+/* --- Product List (Shop) --- */
+#productList{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px; /* Increased gap */
+  margin-top:20px;
+}
+.product-card{
+  border:1px solid #eee;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  background:#fff;
+  transition:transform 0.2s;
+}
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.product-card img{
+  width:100%;
+  aspect-ratio:1/1;
+  object-fit:cover;
+  border-radius:10px;
+}
+.product-card h3{
+  margin:8px 0 0 0;
+  font-size:16px;
+  font-weight:600;
+  color: #333;
+}
+.product-card p{
+  margin:4px 0 6px 0;
+  color:#e67e22; /* Orange price color */
+  font-size:15px;
+  font-weight: 500;
+}
+
+/* --- QR Page --- */
+.qr-page .inner-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  min-height:40vh; 
+  padding:20px 0;
+}
+.qr-page img{
+  width:180px; 
+  border:5px solid #fff;
+  box-shadow:0 0 10px rgba(0,0,0,0.1);
+  border-radius:15px;
+  margin-bottom:20px;
+}
+.qr-page h3 { margin-top: 0; font-size: 18px; color: #1a73e8;}
+.qr-page p{font-size:15px;color:#555;margin:8px 0;}
+#utrNumber { text-align:center; font-size: 18px; font-weight: 500; }
+
+/* FIX 4: Only Submit button in QR page, full width */
+.qr-page .action-buttons-top {
+    display:flex;
+    justify-content:center; 
+    width:100%;
+    margin-top:15px;
+}
+.qr-page .action-buttons-top button.primary-btn {
+    width: 100%; 
+    padding:12px;
+}
+.qr-page .action-buttons-bottom {
+    width: 100%;
+    margin-top: 20px; 
+}
+
+
+/* --- Top Bar & ID Tag --- */
+#topBar{
+  display:none;
+  justify-content:space-between;
+  align-items:center;
+  background:#fff;
+  padding:10px 20px;
+  margin:0 auto;
+  max-width:480px;
+  border-radius:0 0 10px 10px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  position:sticky;
+  top:0;
+  z-index:999;
+}
+/* FIX 1: ID tag slightly flattened */
+#userIdTag{
+  background:#ff9800; /* Orange */
+  color:#fff;
+  padding:4px 15px; /* Increased horizontal padding */
+  border-radius:6px;
+  height:30px; /* Slightly reduced height to make it 'flatter' */
+  display:flex;
+  align-items:center;
+  font-weight:600;
+  font-size:14px;
+}
+
+/* --- My Orders Icon --- */
+/* FIX 3: Orders icon in the very corner */
+#ordersIcon{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  background:linear-gradient(90deg,#1a73e8,#4285f4); 
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  border:none;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  z-index:2000;
+  /* Removed fixed positioning from here for static placement */
+}
+#ordersIcon i{
+  font-size: 20px;
+  color: #fff; 
+}
+@media(max-width:768px){
+  #ordersIcon{
+    position:fixed; /* Keep fixed for small screens */
+    top:15px;
+    right:15px;
+  }
+  .container { margin-top: 80px; } 
+}
+@media(min-width:769px){
+  #ordersIcon{ 
+    position:static; /* Static for larger screens */
+    margin-left:auto; /* Pushes it to the right */
+  }
+  .container { margin-top: 60px; }
+}
+
+/* --- Orders Box --- */
+#orderList .product-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    margin-bottom: 15px;
+    padding: 15px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+#orderList .product-card img {
+    width: 100px;
+    height: 100px;
+    align-self: center;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    padding: 5px;
+}
+#orderList .product-card p {
+    margin: 2px 0;
+    font-size: 14px;
+    color: #555;
+}
+#orderList .product-card b {
+    color: #333;
+    font-size: 15px;
+}
+
+/* --- Contact Us Button --- */
+#contactBtn{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,#25D366,#128C7E);
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+  width:auto;
+  padding:12px 28px;
+  font-size:16px;
+  z-index:3000;
+  display:flex; 
+  align-items:center;
+  gap:8px;
+}
+#contactBtn:hover {
+    box-shadow: 0 6px 15px rgba(37, 211, 102, 0.5);
+    transform: translateY(-2px) translateX(-50%); 
+}
+#contactBtn i { color: #fff; font-size: 18px; } 
+
+/* Category filter box smaller (using max-width) */
+#categoryFilter {
+    max-width: 250px; 
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
+}
+
+/* Responsive adjustments for buttons on smaller screens */
+@media (max-width: 400px) {
+    /* Kept for general button styling on small screens, though UPI button is removed */
+}
+
+</style>
+</head>
+<body>
+
+<div id="topBar">
+  <div id="userIdTag">ID: </div>
+  <button id="ordersIcon" onclick="viewOrders()" style="display:none;">
+    <i class="fas fa-shopping-bag"></i>
+  </button>
+</div>
+
+<div class="container" id="loginBox">
+  <h2><i class="fas fa-sign-in-alt"></i> Login Details</h2>
+  <input id="name" type="text" placeholder="Full Name">
+  <input id="mobile" type="number" placeholder="Mobile Number (10 digits)" maxlength="10" oninput="if(this.value.length>10)this.value=this.value.slice(0,10);">
+  <input id="state" type="text" placeholder="State">
+  <input id="district" type="text" placeholder="District">
+  <input id="city" type="text" placeholder="City">
+  <input id="pincode" type="number" placeholder="Pin Code (6 digits)" maxlength="6" oninput="if(this.value.length>6)this.value=this.value.slice(0,6);">
+  <button class="primary-btn" onclick="login()">Login</button>
+</div>
+
+<div class="container shop" id="shopBox">
+  <h2><i class="fas fa-store"></i> Carrom Lover Shop</h2>
+  <p style="text-align:center; margin-top:0;">Select Category</p>
+  <select id="categoryFilter" onchange="filterProducts()">
+    <option value="All">All Categories</option>
+    <option value="70 mm">70 mm</option>
+    <option value="72 mm">72 mm</option>
+    <option value="75 mm">75 mm</option>
+    <option value="80 mm">80 mm</option>
+    <option value="82 mm">82 mm</option>
+    <option value="85 mm">85 mm</option>
+    <option value="87 mm">87 mm</option>
+    <option value="90 mm">90 mm</option>
+  </select>
+  <div id="productList"></div>
+</div>
+
+<div class="container qr-page" id="qrPage">
+  <h2><i class="fas fa-qrcode"></i> Complete Payment</h2>
+  <div class="inner-box">
+    <img id="qrImage" src="https://i.ibb.co/p9k9Kmh/IMG-20251102-151800.webp" alt="QR Code">
+    <h3 id="qrProductName"></h3>
+    <p id="qrProductPrice" style="font-weight:bold;"></p>
+
+    <p style="margin-top:15px;">**After payment, enter your 12-digit UTR number**</p>
+    <input id="utrNumber" type="number" placeholder="Enter 12-digit UTR" style="text-align:center;" oninput="limitUTR(this)">
+    
+    
+<div class="action-buttons-top">
+      <button class="primary-btn" onclick="submitUTR()">Submit Order</button>
+    </div>
+
+    
+<div class="action-buttons-bottom">
+        <button class="secondary-btn" onclick="backToHome()">Cancel / Back</button>
+    </div>
+  </div>
+</div>
+
+<div class="container orders" id="ordersBox">
+  <h2><i class="fas fa-shopping-basket"></i> My Orders</h2>
+  <div id="orderList"></div>
+  <button class="primary-btn" onclick="goShop()">Back to Shop</button>
+</div>
+
+<button id="contactBtn" onclick="window.open('https://wa.me/918145883981','_blank')" style="display:none;">
+  <i class="fab fa-whatsapp"></i> Contact Us
+</button>
+
+<script>
+const firebaseConfig={
+  apiKey:"AIzaSyBQw-x_t_tML2LUSHlFgiVW6Yn3p7ucRio",
+  authDomain:"carrom-lover.firebaseapp.com",
+  databaseURL:"https://carrom-lover-default-rtdb.firebaseio.com",
+  projectId:"carrom-lover",
+  storageBucket:"carrom-lover.firebasestorage.app",
+  messagingSenderId:"576626202392",
+  appId:"1:576626202392:web:7aecf95b8cc2a87886f06d"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+let userId=localStorage.getItem("carromUserId");
+if(!userId){
+  userId=Math.floor(100000+Math.random()*900000).toString();
+  localStorage.setItem("carromUserId",userId);
+}
+document.getElementById("userIdTag").innerText="ID: "+userId;
+
+let currentUser=localStorage.getItem("carromUser")||null;
+let selectedProduct=null;
+let allProducts=[];
+
+// Auto login
+if(currentUser){ showShop(); } else { /* Contact Us hidden by default */ }
+
+function login(){
+  const name=document.getElementById("name").value.trim(),
+        mobile=document.getElementById("mobile").value.trim(),
+        state=document.getElementById("state").value.trim(),
+        district=document.getElementById("district").value.trim(),
+        city=document.getElementById("city").value.trim(),
+        pincode=document.getElementById("pincode").value.trim();
+  if(!name||!mobile||!state||!district||!city||!pincode) return alert("⚠️ Fill all fields");
+  if(mobile.length!==10) return alert("⚠️ Mobile number must be exactly 10 digits");
+  if(pincode.length!==6) return alert("⚠️ Pin code must be exactly 6 digits"); // FIX: 6 digits validation
+  currentUser=mobile;
+  localStorage.setItem("carromUser",mobile);
+  db.ref("users/"+userId).set({userId,name,mobile,state,district,city,pincode});
+  alert("✅ Login successful!");
+  showShop();
+}
+
+function showShop(){
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("qrPage").style.display="none";
+  document.getElementById("ordersBox").style.display="none";
+  
+  document.getElementById("shopBox").style.display="block";
+  document.getElementById("topBar").style.display="flex";
+  document.getElementById("ordersIcon").style.display="flex";
+  document.getElementById("contactBtn").style.display="flex"; // Contact Us দেখানো হচ্ছে
+  
+  db.ref("products").on("value",snap=>{
+    allProducts=[];
+    snap.forEach(item=>{
+      let v=item.val();
+      allProducts.push({...v,id:item.key});
+    });
+    filterProducts();
+  });
+}
+
+function filterProducts(){
+  const cat=document.getElementById("categoryFilter").value;
+  const list=document.getElementById("productList");
+  list.innerHTML="";
+  let filtered=cat==="All"?allProducts:allProducts.filter(p=>p.category===cat);
+  if(filtered.length===0){list.innerHTML="<p style='text-align:center;'>No products found in this category.</p>";return;}
+  filtered.forEach(v=>{
+    list.innerHTML+=`
+    <div class='product-card'>
+      <img src='${v.image}' alt='${v.name}'>
+      <h3>${v.name} (${v.category||''})</h3>
+      <p>₹${v.price}</p>
+      <button onclick="buyNow('${v.id}','${v.name}','${v.category||''}',${v.price},'${v.image}')">Buy Now</button>
+    </div>`;
+  });
+}
+
+function buyNow(id,name,category,price,image){
+  selectedProduct={id,name,category,price,image};
+  
+  document.getElementById("shopBox").style.display="none";
+  document.getElementById("topBar").style.display="none";
+  document.getElementById("ordersIcon").style.display="none";
+  
+  document.getElementById("qrPage").style.display="block";
+  document.getElementById("contactBtn").style.display="none"; // Contact Us লুকিয়ে রাখা হচ্ছে
+  document.getElementById("qrProductName").innerText=`${name} (${category})`;
+  document.getElementById("qrProductPrice").innerText=`Price: ₹${price}`;
+  
+  // UPI button functionality is already removed.
+}
+
+function limitUTR(el){ 
+    if(el.value.length>12) el.value=el.value.slice(0,12); 
+}
+
+function submitUTR(){
+  const utr=document.getElementById("utrNumber").value.trim();
+  if(utr.length!==12) return alert("⚠️ UTR must be exactly 12 digits");
+  if (!currentUser) return alert("⚠️ Please log in first."); 
+  
+  db.ref("orders").push({
+    userId,
+    productName:selectedProduct.name,
+    productCategory:selectedProduct.category,
+    productPrice:selectedProduct.price,
+    productImage:selectedProduct.image,
+    utr,
+    status:"Pending"
+  });
+  
+  alert("✅ Order submitted! Awaiting Admin confirmation.");
+  document.getElementById("utrNumber").value=""; 
+  document.getElementById("qrPage").style.display="none";
+  showShop();
+}
+
+function backToHome(){
+  document.getElementById("utrNumber").value="";
+  document.getElementById("qrPage").style.display="none";
+  showShop();
+}
+
+function viewOrders(){
+  document.getElementById("shopBox").style.display="none";
+  document.getElementById("topBar").style.display="none";
+  document.getElementById("ordersIcon").style.display="none";
+  document.getElementById("qrPage").style.display="none";
+  document.getElementById("contactBtn").style.display="none"; // Contact Us লুকিয়ে রাখা হচ্ছে
+  
+  document.getElementById("ordersBox").style.display="block";
+  
+  const list=document.getElementById("orderList");
+  db.ref("orders").orderByChild("userId").equalTo(userId).on("value",snap=>{
+    list.innerHTML="";
+    if(!snap.exists()){list.innerHTML="<p style='text-align:center;'>No orders yet. Start shopping!</p>";return;}
+    
+    const ordersArray = [];
+    snap.forEach(child => ordersArray.push(child.val()));
+    ordersArray.reverse();
+
+    ordersArray.forEach(d=>{
+      let statusColor = '';
+      if (d.status === 'Confirmed') statusColor = '#4caf50';
+      else if (d.status === 'Cancelled') statusColor = '#f44336';
+      else statusColor = '#ff9800'; 
+      
+      list.innerHTML+=`
+        <div class='product-card'>
+          <img src='${d.productImage}' alt='Product Image'>
+          <p><b>Product: ${d.productName} (${d.productCategory||''})</b></p>
+          <p>Price: ₹${d.productPrice}</p>
+          <p>UTR: ${d.utr}</p>
+          <p style="color: ${statusColor};">Status: ${d.status}</p>
+        </div>`;
+    });
+  });
+}
+
+function goShop(){
+  document.getElementById("ordersBox").style.display="none";
+  showShop();
+}
+</script>
+</body>
+</html>
